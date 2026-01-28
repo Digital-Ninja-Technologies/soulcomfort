@@ -1,6 +1,8 @@
-import { Book, Quote, Heart, RefreshCw } from "lucide-react";
+import { Book, Quote, Heart, RefreshCw, Copy, Share2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface ContentDisplayProps {
   content: string;
@@ -13,6 +15,42 @@ export function ContentDisplay({
   isLoading,
   onRefresh,
 }: ContentDisplayProps) {
+  const [copied, setCopied] = useState(false);
+
+  const getPlainText = (markdown: string) => {
+    // Simple conversion: remove markdown formatting for sharing
+    return markdown
+      .replace(/#{1,6}\s/g, "")
+      .replace(/\*\*/g, "")
+      .replace(/\*/g, "")
+      .replace(/>/g, "")
+      .trim();
+  };
+
+  const handleCopyToClipboard = async () => {
+    const text = getPlainText(content);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast.success("Content copied to clipboard!");
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast.error("Failed to copy to clipboard");
+    }
+  };
+
+  const handleShareTwitter = () => {
+    const text = getPlainText(content).slice(0, 280);
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const handleShareFacebook = () => {
+    const url = window.location.href;
+    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(getPlainText(content).slice(0, 500))}`;
+    window.open(shareUrl, "_blank", "noopener,noreferrer");
+  };
+
   if (isLoading) {
     return (
       <div className="content-card animate-fade-in">
@@ -86,6 +124,37 @@ export function ContentDisplay({
       {/* Footer */}
       <div className="divider-ornate mt-8 mb-6">
         <Heart className="w-4 h-4 text-accent fill-accent/30" />
+      </div>
+
+      {/* Share buttons */}
+      <div className="flex flex-wrap justify-center gap-3 mb-6">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleCopyToClipboard}
+          className="gap-2 text-muted-foreground hover:text-primary hover:border-primary/30"
+        >
+          {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+          {copied ? "Copied!" : "Copy"}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleShareTwitter}
+          className="gap-2 text-muted-foreground hover:text-primary hover:border-primary/30"
+        >
+          <Share2 className="w-4 h-4" />
+          Share on X
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleShareFacebook}
+          className="gap-2 text-muted-foreground hover:text-primary hover:border-primary/30"
+        >
+          <Share2 className="w-4 h-4" />
+          Facebook
+        </Button>
       </div>
 
       <div className="flex justify-center">
