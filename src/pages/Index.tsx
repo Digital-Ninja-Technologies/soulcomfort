@@ -2,13 +2,18 @@ import { useState } from "react";
 import { Hero } from "@/components/Hero";
 import { MoodSelector, type Mood } from "@/components/MoodSelector";
 import { ContentDisplay } from "@/components/ContentDisplay";
+import { DailyDevotional } from "@/components/DailyDevotional";
+import { UserMenu } from "@/components/UserMenu";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const Index = () => {
+  const { user } = useAuth();
   const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
   const [content, setContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showDevotional, setShowDevotional] = useState(true);
 
   const generateContent = async (mood: Mood) => {
     setIsLoading(true);
@@ -53,8 +58,20 @@ const Index = () => {
   return (
     <div className="min-h-screen gradient-radiant">
       <div className="container mx-auto px-4 pb-16">
+        {/* Top Bar */}
+        <div className="flex justify-end py-4">
+          <UserMenu onShowDevotional={() => setShowDevotional(true)} />
+        </div>
+
         {/* Hero Section */}
         <Hero />
+
+        {/* Daily Devotional for logged-in users */}
+        {user && showDevotional && (
+          <section className="max-w-3xl mx-auto mb-12">
+            <DailyDevotional onClose={() => setShowDevotional(false)} />
+          </section>
+        )}
 
         {/* Mood Selection Section */}
         <section className="mb-12">
@@ -82,7 +99,9 @@ const Index = () => {
         {/* Footer hint when no content */}
         {!isLoading && !content && selectedMood === null && (
           <p className="text-center text-muted-foreground/60 mt-8 font-display italic opacity-0 animate-fade-in stagger-6">
-            Select a mood above to receive personalized spiritual content
+            {user 
+              ? "Your daily devotional is above. Select a mood for additional content."
+              : "Select a mood above to receive personalized spiritual content"}
           </p>
         )}
       </div>
