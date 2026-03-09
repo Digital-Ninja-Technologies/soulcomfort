@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, Sun } from "lucide-react";
+import { User, LogOut, Sun, Heart, BookOpen, BookHeart } from "lucide-react";
 import { toast } from "sonner";
 
 interface UserMenuProps {
@@ -50,6 +50,18 @@ export function UserMenu({ onShowDevotional }: UserMenuProps) {
         <DropdownMenuItem onClick={onShowDevotional} className="gap-2 cursor-pointer">
           <Sun className="w-4 h-4" />
           Daily Devotional
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate("/favorites")} className="gap-2 cursor-pointer">
+          <Heart className="w-4 h-4" />
+          Favorites
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate("/history")} className="gap-2 cursor-pointer">
+          <BookOpen className="w-4 h-4" />
+          History
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate("/prayer-journal")} className="gap-2 cursor-pointer">
+          <BookHeart className="w-4 h-4" />
+          Prayer Journal
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer text-destructive">

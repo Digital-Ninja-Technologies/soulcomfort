@@ -4,6 +4,7 @@ import { MoodSelector, type Mood } from "@/components/MoodSelector";
 import { ContentDisplay } from "@/components/ContentDisplay";
 import { DailyDevotional } from "@/components/DailyDevotional";
 import { UserMenu } from "@/components/UserMenu";
+import { StreakDisplay } from "@/components/StreakDisplay";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -76,7 +77,8 @@ const Index = () => {
     <div className="min-h-screen gradient-radiant">
       <div className="container mx-auto px-4 pb-16">
         {/* Top Bar */}
-        <div className="flex justify-end py-4">
+        <div className="flex justify-end items-center gap-3 py-4">
+          {user && <StreakDisplay />}
           <UserMenu onShowDevotional={() => setShowDevotional(true)} />
         </div>
 
@@ -114,6 +116,7 @@ const Index = () => {
               content={content}
               isLoading={isLoading}
               onRefresh={handleRefresh}
+              mood={selectedMood || undefined}
             />
           </DialogContent>
         </Dialog>
