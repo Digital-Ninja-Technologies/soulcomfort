@@ -7,6 +7,12 @@ import { UserMenu } from "@/components/UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const Index = () => {
   const { user } = useAuth();
@@ -14,6 +20,7 @@ const Index = () => {
   const [content, setContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [showDevotional, setShowDevotional] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const generateContent = async (mood: Mood) => {
     setIsLoading(true);
@@ -46,6 +53,7 @@ const Index = () => {
 
   const handleMoodSelect = (mood: Mood) => {
     setSelectedMood(mood);
+    setModalOpen(true);
     generateContent(mood);
   };
 
@@ -53,6 +61,15 @@ const Index = () => {
     if (selectedMood) {
       generateContent(selectedMood);
     }
+  };
+
+  const moodLabels: Record<Mood, string> = {
+    peaceful: "Peaceful",
+    anxious: "Anxious",
+    grateful: "Grateful",
+    grieving: "Grieving",
+    joyful: "Joyful",
+    seeking: "Seeking Guidance",
   };
 
   return (
@@ -85,21 +102,26 @@ const Index = () => {
           />
         </section>
 
-        {/* Content Display Section */}
-        {(isLoading || content) && (
-          <section className="max-w-3xl mx-auto">
+        {/* Content Modal */}
+        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="font-display text-xl text-primary">
+                {selectedMood ? `Feeling ${moodLabels[selectedMood]}` : "Your Content"}
+              </DialogTitle>
+            </DialogHeader>
             <ContentDisplay
               content={content}
               isLoading={isLoading}
               onRefresh={handleRefresh}
             />
-          </section>
-        )}
+          </DialogContent>
+        </Dialog>
 
         {/* Footer hint when no content */}
-        {!isLoading && !content && selectedMood === null && (
+        {!selectedMood && (
           <p className="text-center text-muted-foreground/60 mt-8 font-display italic opacity-0 animate-fade-in stagger-6">
-            {user 
+            {user
               ? "Your daily devotional is above. Select a mood for additional content."
               : "Select a mood above to receive personalized spiritual content"}
           </p>
