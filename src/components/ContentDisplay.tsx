@@ -3,17 +3,21 @@ import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import { useState } from "react";
 import { toast } from "sonner";
+import { FavoriteButton } from "./FavoriteButton";
+import { AudioControls } from "./AudioControls";
 
 interface ContentDisplayProps {
   content: string;
   isLoading: boolean;
   onRefresh: () => void;
+  mood?: string;
 }
 
 export function ContentDisplay({
   content,
   isLoading,
   onRefresh,
+  mood,
 }: ContentDisplayProps) {
   const [copied, setCopied] = useState(false);
 
@@ -126,8 +130,14 @@ export function ContentDisplay({
         <Heart className="w-4 h-4 text-accent fill-accent/30" />
       </div>
 
+      {/* Audio & Actions */}
+      <div className="flex justify-center mb-6">
+        <AudioControls content={content} />
+      </div>
+
       {/* Share buttons */}
       <div className="flex flex-wrap justify-center gap-3 mb-6">
+        {mood && <FavoriteButton content={content} mood={mood} />}
         <Button
           variant="outline"
           size="sm"
