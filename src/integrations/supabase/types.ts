@@ -41,6 +41,66 @@ export type Database = {
         }
         Relationships: []
       }
+      favorites: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          mood: string
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          mood: string
+          source_type?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          mood?: string
+          source_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      prayers: {
+        Row: {
+          answered_at: string | null
+          content: string | null
+          created_at: string
+          id: string
+          is_answered: boolean
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answered_at?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_answered?: boolean
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answered_at?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_answered?: boolean
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -90,6 +150,33 @@ export type Database = {
           id?: string
           notifications_enabled?: boolean
           preferred_mood?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_streaks: {
+        Row: {
+          current_streak: number
+          id: string
+          last_activity_date: string | null
+          longest_streak: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number
           updated_at?: string
           user_id?: string
         }
