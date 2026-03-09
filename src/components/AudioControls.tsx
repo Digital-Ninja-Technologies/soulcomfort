@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Volume2, VolumeX, Play, Pause } from "lucide-react";
+import { Volume2, VolumeX, Play, Pause, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 const AMBIENT_SOUNDS = [
   { id: "rain", label: "🌧️ Rain", url: "https://cdn.freesound.org/previews/531/531947_6386094-lq.mp3" },
@@ -17,46 +18,85 @@ const AMBIENT_SOUNDS = [
 ];
 
 export function AudioControls({ content }: { content?: string }) {
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoadingTTS, setIsLoadingTTS] = useState(false);
   const [ambientPlaying, setAmbientPlaying] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+  const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     return () => {
-      window.speechSynthesis.cancel();
-      audioRef.current?.pause();
+      ttsAudioRef.current?.pause();
+      ambientAudioRef.current?.pause();
     };
   }, []);
 
-  const handleReadAloud = () => {
-    if (!content) return;
-
-    if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-      return;
-    }
-
-    const plainText = content
+  const getPlainText = (markdown: string) => {
+    return markdown
       .replace(/#{1,6}\s/g, "")
       .replace(/\*\*/g, "")
       .replace(/\*/g, "")
       .replace(/>/g, "")
       .trim();
+  };
 
-    const utterance = new SpeechSynthesisUtterance(plainText);
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
+  const handleReadAloud = async () => {
+    if (!content) return;
 
-    window.speechSynthesis.speak(utterance);
-    setIsSpeaking(true);
+    if (isPlaying) {
+      ttsAudioRef.current?.pause();
+      setIsPlaying(false);
+      return;
+    }
+
+    setIsLoadingTTS(true);
+    try {
+      const plainText = getPlainText(content);
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ text: plainText }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("TTS request failed");
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      if (ttsAudioRef.current) {
+        ttsAudioRef.current.pause();
+      }
+
+      const audio = new Audio(audioUrl);
+      audio.onended = () => setIsPlaying(false);
+      audio.onerror = () => {
+        setIsPlaying(false);
+        toast.error("Audio playback failed");
+      };
+      ttsAudioRef.current = audio;
+      await audio.play();
+      setIsPlaying(true);
+    } catch (err) {
+      console.error("TTS error:", err);
+      toast.error("Failed to generate speech. Please try again.");
+    } finally {
+      setIsLoadingTTS(false);
+    }
   };
 
   const handleAmbientSound = (soundId: string) => {
     if (ambientPlaying === soundId) {
-      audioRef.current?.pause();
+      ambientAudioRef.current?.pause();
       setAmbientPlaying(null);
       return;
     }
@@ -64,15 +104,15 @@ export function AudioControls({ content }: { content?: string }) {
     const sound = AMBIENT_SOUNDS.find((s) => s.id === soundId);
     if (!sound) return;
 
-    if (audioRef.current) {
-      audioRef.current.pause();
+    if (ambientAudioRef.current) {
+      ambientAudioRef.current.pause();
     }
 
     const audio = new Audio(sound.url);
     audio.loop = true;
     audio.volume = 0.3;
     audio.play().catch(() => {});
-    audioRef.current = audio;
+    ambientAudioRef.current = audio;
     setAmbientPlaying(soundId);
   };
 
@@ -83,10 +123,17 @@ export function AudioControls({ content }: { content?: string }) {
           variant="outline"
           size="sm"
           onClick={handleReadAloud}
+          disabled={isLoadingTTS}
           className="gap-2 text-muted-foreground hover:text-primary hover:border-primary/30"
         >
-          {isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-          {isSpeaking ? "Stop" : "Read Aloud"}
+          {isLoadingTTS ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : isPlaying ? (
+            <VolumeX className="w-4 h-4" />
+          ) : (
+            <Volume2 className="w-4 h-4" />
+          )}
+          {isLoadingTTS ? "Loading..." : isPlaying ? "Stop" : "Read Aloud"}
         </Button>
       )}
 
@@ -119,7 +166,7 @@ export function AudioControls({ content }: { content?: string }) {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
-                  audioRef.current?.pause();
+                  ambientAudioRef.current?.pause();
                   setAmbientPlaying(null);
                 }}
                 className="cursor-pointer text-destructive"
